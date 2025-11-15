@@ -1,0 +1,269 @@
+.analytics-container {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+  background-color: white;
+}
+
+.analytics-subtabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 10px;
+}
+
+.analytics-subtab {
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 4px 4px 0 0;
+  background-color: #f5f5f5;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -12px;
+}
+
+.analytics-subtab:hover {
+  background-color: #e8e8e8;
+  color: #333;
+}
+
+.analytics-subtab.active {
+  background-color: white;
+  color: rgb(0, 48, 87);
+  border-bottom: 2px solid rgb(0, 48, 87);
+  font-weight: 600;
+}
+
+.analytics-container h3 {
+  margin-bottom: 10px;
+  color: #333;
+  font-size: 18px;
+}
+
+.analytics-info {
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #666;
+}
+
+.charts-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.chart-section {
+  background-color: #fafafa;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.chart-section h4 {
+  margin-bottom: 15px;
+  color: rgb(0, 48, 87);
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Add padding between legend and graph on line charts */
+.chart-section .recharts-legend-wrapper {
+  margin-top: 30px !important;
+  padding-top: 20px !important;
+}
+
+.stats-table-container {
+  overflow-x: auto;
+}
+
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  font-size: 14px;
+}
+
+.stats-table thead {
+  background-color: rgb(0, 48, 87);
+  color: white;
+}
+
+.stats-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: bold;
+  border: 1px solid #ddd;
+}
+
+.stats-table td {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  text-align: right;
+}
+
+.stats-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.stats-table tbody tr:hover {
+  background-color: #f0f0f0;
+}
+
+.position-cell {
+  font-weight: bold;
+  color: rgb(0, 48, 87);
+  text-align: left !important;
+}
+
+.median-cell {
+  font-weight: bold;
+  color: rgb(179, 163, 105);
+}
+
+.mean-cell {
+  font-weight: bold;
+  color: #ff7300;
+}
+
+/* Custom Tooltip Styles */
+.custom-tooltip {
+  background-color: rgba(0, 0, 0, 0.9);
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 12px;
+  color: white;
+  font-size: 12px;
+  max-width: 300px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.tooltip-label {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: rgb(179, 163, 105);
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  padding-bottom: 4px;
+}
+
+.tooltip-count {
+  margin-bottom: 8px;
+  color: #ccc;
+}
+
+.tooltip-players {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 8px;
+}
+
+.tooltip-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.tooltip-player:last-child {
+  border-bottom: none;
+}
+
+.tooltip-rank {
+  font-weight: bold;
+  color: rgb(179, 163, 105);
+  min-width: 35px;
+}
+
+.tooltip-name {
+  flex: 1;
+  color: white;
+}
+
+.tooltip-points {
+  color: #4a90e2;
+  font-weight: 600;
+  min-width: 60px;
+  text-align: right;
+}
+
+.tooltip-more {
+  padding: 4px 0;
+  color: #999;
+  font-style: italic;
+  font-size: 11px;
+  text-align: center;
+}
+
+/* Heatmap Styles */
+.heatmap-container {
+  overflow-x: auto;
+  margin-bottom: 15px;
+}
+
+.heatmap-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.heatmap-table th {
+  background-color: rgb(0, 48, 87);
+  color: white;
+  padding: 8px;
+  text-align: center;
+  font-weight: bold;
+  border: 1px solid #ddd;
+}
+
+.heatmap-table td {
+  padding: 6px 8px;
+  text-align: center;
+  border: 1px solid #ddd;
+  color: white;
+  font-weight: 600;
+  min-width: 60px;
+}
+
+.heatmap-rank {
+  background-color: #f5f5f5 !important;
+  color: #333 !important;
+  font-weight: bold;
+  text-align: center;
+}
+
+.heatmap-cell {
+  transition: opacity 0.2s;
+  cursor: pointer;
+}
+
+.heatmap-cell:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+  font-size: 12px;
+  color: #666;
+}
+
+.heatmap-gradient {
+  width: 200px;
+  height: 20px;
+  background: linear-gradient(to right, rgb(30, 144, 226), rgb(0, 48, 87));
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
