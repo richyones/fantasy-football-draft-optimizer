@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/fantasy-football-draft-optimizer/static/css/main.e6578ab3.css",
+    "main.js": "/fantasy-football-draft-optimizer/static/js/main.df3eef9d.js",
+    "index.html": "/fantasy-football-draft-optimizer/index.html",
+    "main.e6578ab3.css.map": "/fantasy-football-draft-optimizer/static/css/main.e6578ab3.css.map",
+    "main.df3eef9d.js.map": "/fantasy-football-draft-optimizer/static/js/main.df3eef9d.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.e6578ab3.css",
+    "static/js/main.df3eef9d.js"
+  ]
+}
