@@ -22,6 +22,7 @@ function App() {
   const [rejectedPlayerNames, setRejectedPlayerNames] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [currentTop3, setCurrentTop3] = useState([]);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [roster, setRoster] = useState({
     QB: null,
     RB1: null,
@@ -244,8 +245,8 @@ function App() {
       try {
         // Load both CSVs
         const [draftBoardResponse, playerInfoResponse] = await Promise.all([
-          fetch('/fantasy_predictions_2024_full.csv'),
-          fetch('/nfl_player_information.csv')
+          fetch(`${process.env.PUBLIC_URL}/fantasy_predictions_2024_full.csv`),
+          fetch(`${process.env.PUBLIC_URL}/nfl_player_information.csv`)
         ]);
         
         const draftBoardText = await draftBoardResponse.text();
@@ -338,9 +339,11 @@ function App() {
         }));
         
         allPlayersRef.current = rankedData;
+        setDataLoaded(true);
       } catch (error) {
         console.error('Error loading CSV data:', error);
         // Keep fallback data if CSV fails
+        setDataLoaded(true); // Still mark as loaded even if using fallback
       }
     };
     
@@ -654,13 +657,13 @@ function App() {
     return () => clearTimeout(cpuDraftTimer);
   }, [currentPickNumber, isUserTurn, draftStarted, draftComplete, draftSettings.numTeams]);
 
-  // Update Top 3 whenever draft state changes
+  // Update Top 3 whenever draft state changes or data loads
   useEffect(() => {
-    if (draftStarted) {
+    if (draftStarted && dataLoaded) {
       const newTop3 = getSmartTop3();
       setCurrentTop3(newTop3);
     }
-  }, [draftStarted, currentPickNumber, draftedPlayerNames, rejectedPlayerNames, isUserTurn]);
+  }, [draftStarted, currentPickNumber, draftedPlayerNames, rejectedPlayerNames, isUserTurn, dataLoaded, roster]);
 
   const fillBench = (player) => {
     if (!roster.BE1) {
