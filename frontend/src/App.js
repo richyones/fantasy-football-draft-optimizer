@@ -245,7 +245,7 @@ function App() {
       try {
         // Load both CSVs
         const [draftBoardResponse, playerInfoResponse] = await Promise.all([
-          fetch(`${process.env.PUBLIC_URL}/fantasy_predictions_2024_full.csv`),
+          fetch(`${process.env.PUBLIC_URL}/player_adp_optimized_FINAL.csv`),
           fetch(`${process.env.PUBLIC_URL}/nfl_player_information.csv`)
         ]);
         
@@ -339,6 +339,7 @@ function App() {
         }));
         
         allPlayersRef.current = rankedData;
+        console.log(`Successfully loaded ${rankedData.length} players from player_adp_optimized_FINAL.csv`);
         setDataLoaded(true);
       } catch (error) {
         console.error('Error loading CSV data:', error);

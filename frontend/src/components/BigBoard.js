@@ -15,7 +15,7 @@ const BigBoard = ({ onDraftPlayer, draftedPlayerNames = [], isUserTurn = false }
       try {
         // Load both CSVs
         const [draftBoardResponse, playerInfoResponse] = await Promise.all([
-          fetch(`${process.env.PUBLIC_URL}/fantasy_predictions_2024_full.csv`),
+          fetch(`${process.env.PUBLIC_URL}/player_adp_optimized_FINAL.csv`),
           fetch(`${process.env.PUBLIC_URL}/nfl_player_information.csv`)
         ]);
         
