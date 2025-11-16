@@ -1,36 +1,25 @@
 {
   "name": "fantasy-football-draft-optimizer",
   "version": "1.0.0",
-  "description": "Fantasy Football Draft Optimizer Tool",
-  "homepage": "https://richyones.github.io/fantasy-football-draft-optimizer",
-  "main": "index.js",
+  "description": "Fantasy Football Draft Optimizer - Full Stack Project",
+  "private": true,
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "frontend:install": "cd frontend && npm install",
+    "frontend:start": "cd frontend && npm start",
+    "frontend:build": "cd frontend && npm run build",
+    "frontend:deploy": "cd frontend && npm run deploy",
+    "modeling:install": "cd modeling && pip install -r requirements.txt"
   },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1",
-    "recharts": "^3.4.1"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/richyones/fantasy-football-draft-optimizer.git"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
-  "devDependencies": {
-    "gh-pages": "^6.3.0"
-  }
+  "keywords": [
+    "fantasy-football",
+    "draft-optimizer",
+    "react",
+    "data-science"
+  ],
+  "author": "",
+  "license": "ISC"
 }

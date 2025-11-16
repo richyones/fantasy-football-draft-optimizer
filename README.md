@@ -1,33 +1,19 @@
-# Getting Started with Fantasy Football Draft Optimizer
+# Fantasy Football Draft Optimizer
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A comprehensive fantasy football draft optimization tool with data-driven player recommendations and analytics.
 
-## Available Scripts
+## Project Structure
 
-In the project directory, you can run:
-
-### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```
+fantasy-football-draft-optimizer/
+├── frontend/          # React web application
+├── modeling/          # Data science and modeling code
+├── data/              # Data files (raw, processed, outputs)
+│   ├── raw/          # Original data files
+│   ├── processed/    # Generated feature files
+│   └── outputs/      # Final outputs for web app
+└── docs/             # Documentation
+```
 
 ## Features
 
@@ -37,21 +23,77 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
 - **Your Big Board**: Dynamic player rankings
 - **Picks History**: Recent draft selections
 - **Alerts**: Important notifications and warnings
+- **Analytics**: Data visualization and analysis
 
-## Installation
+## Quick Start
 
-1. Clone the repository
-2. Run `npm install` to install dependencies
-3. Run `npm start` to start the development server
+### Frontend (Web Application)
 
-## Project Structure
-
-```
-src/
-├── App.js          # Main application component
-├── App.css         # Main stylesheet
-├── index.js        # Application entry point
-└── index.css       # Global styles
+1. Navigate to the frontend directory:
+```bash
+cd frontend
 ```
 
+2. Install dependencies:
+```bash
+npm install
+```
 
+3. Start the development server:
+```bash
+npm start
+```
+
+The app will open at [http://localhost:3000](http://localhost:3000)
+
+### Modeling
+
+1. Navigate to the modeling directory:
+```bash
+cd modeling
+```
+
+2. Install Python dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Run the scoring script:
+```bash
+python scripts/"Fantasy PPR Scoring and Dataframes.py"
+```
+
+See `modeling/README.md` for more details.
+
+## Deployment
+
+The web application is deployed to GitHub Pages at:
+https://richyones.github.io/fantasy-football-draft-optimizer
+
+To deploy updates:
+```bash
+cd frontend
+npm run deploy
+```
+
+## Data Files
+
+- **Raw Data**: `data/raw/` - Original data files
+- **Processed Features**: `data/processed/` - Generated feature files from modeling
+- **Web App Outputs**: `data/outputs/` - Final CSV files used by the web application
+
+## Documentation
+
+- Project documentation: `docs/CSE 6242 - Group Project.pdf`
+- Progress report: `docs/team044progress.pdf`
+
+## Technologies
+
+- **Frontend**: React, Create React App
+- **Visualization**: Recharts
+- **Modeling**: Python, Pandas, nflreadpy
+- **Deployment**: GitHub Pages
+
+## License
+
+This project is part of CSE 6242 Group Project.
