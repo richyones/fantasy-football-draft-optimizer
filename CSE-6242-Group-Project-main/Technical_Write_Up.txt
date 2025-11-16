@@ -1,0 +1,279 @@
+"""
+FANTASY FOOTBALL PREDICTIONS SYSTEM - TECHNICAL WRITE-UP
+========================================================
+
+This document provides a comprehensive overview of the entire codebase, explaining
+the overall logic, important steps, and how all the pieces fit together.
+
+OVERVIEW
+--------
+This system combines NFL play-by-play data processing with machine learning to
+predict fantasy football points per week for all positions (QB, RB, WR, TE, K, D/ST).
+The system processes 26 seasons of NFL data (1999-2024) and uses a Mixture of Experts
+(MoE) approach to train position-specific models that predict future performance.
+
+The overall pipeline consists of three main phases:
+1. Data Preparation and Scoring - Load and process NFL data, calculate fantasy points
+2. Feature Engineering - Create position-specific features from play-by-play data
+3. Model Training and Prediction - Train MoE models and generate predictions
+
+PHASE 1: DATA PREPARATION AND SCORING
+-------------------------------------
+In this phase, we load NFL play-by-play data from nflreadpy and process it to
+calculate ESPN-standard PPR fantasy points for all players.
+
+Key Steps:
+1. Load play-by-play data for each season (1999-2024)
+   - We use nflreadpy which provides Polars DataFrames, which we convert to Pandas
+   - Each season is processed independently to manage memory
+
+2. Filter to regular season weeks only
+   - We exclude playoff games (season_type == 'REG')
+   - We cap at week 16 for older seasons (<=2020) and week 17 for newer (>=2021)
+     because fantasy leagues typically don't play in the final week
+
+3. Normalize team abbreviations historically
+   - Teams have moved cities over the years (Rams: STL→LAR, Raiders: OAK→LV, Chargers: SD→LAC)
+   - We normalize team codes based on the season to ensure consistency
+
+4. Calculate fantasy points for each player
+   - PPR (Point Per Reception) scoring: 1 point per catch, plus yards and TDs
+   - Passing: 0.04 points per yard, 4 points per TD, -2 per INT
+   - Rushing: 0.1 points per yard, 6 points per TD
+   - Receiving: 1 point per catch (PPR bonus), 0.1 points per yard, 6 points per TD
+   - Two-point conversions: 2 points
+   - Fumbles lost: -2 points
+   - We attribute points to the correct player based on their role (passer, rusher, receiver)
+
+5. Aggregate to weekly and season totals
+   - Weekly totals: one row per player per week
+   - Season totals: one row per player per season with games played and PPG
+
+6. Calculate D/ST fantasy points
+   - D/ST scoring is team-based, not player-based
+   - Points for sacks, interceptions, fumble recoveries, safeties, blocked kicks, return TDs
+   - Points-allowed tiered scoring (shutout = 10 points, 0-6 = 7 points, etc.)
+
+7. Calculate Kicker fantasy points
+   - Distance-based field goal scoring (0-39 = 3, 40-49 = 4, 50-59 = 5, 60+ = 6)
+   - Missed FGs = -1 point
+   - PATs = 1 point (or -1 if missed, depending on league settings)
+
+Output: DataFrames with fantasy point totals for all positions, ready for feature engineering.
+
+PHASE 2: FEATURE ENGINEERING
+----------------------------
+In this phase, we create position-specific features from the play-by-play data.
+These features capture statistics that help predict future fantasy performance.
+
+Key Steps:
+1. Load position data from rosters
+   - We use nflreadpy rosters to identify what position each player played each season
+   - This is cached because we call it multiple times for the same seasons
+
+2. Engineer position-specific features
+   - QB: Completion %, YPA, TD rate, INT rate, EPA per pass, air yards, YAC, rushing stats
+   - RB: Carries, rush yards, rush TDs, goal-line carries, targets, receptions, yards per touch, rush share, target share
+   - WR: Targets, receptions, yards, TDs, ADOT (average depth of target), YPR, YPT, target share
+   - TE: Similar to WR but with lower filtering thresholds
+   - K: Field goals by distance bucket (0-39, 40-49, 50-59, 60+), PATs made/attempted
+   - D/ST: Sacks, interceptions, fumble recoveries, safeties, blocked kicks, return TDs, points allowed
+
+3. Handle missing data and ensure consistency
+   - Older NFL seasons might be missing certain columns (e.g., "pass_attempt" vs "pass")
+   - We ensure all required columns exist and are properly typed
+   - We handle missing values and create defaults where needed
+
+4. Merge features with fantasy point totals
+   - We merge the engineered features with the fantasy point totals from Phase 1
+   - This gives us our target variable (fantasy points per week)
+   - We filter to only keep players who actually played that position
+   - We remove players with fewer than 4 games (to avoid small-sample noise)
+
+5. Filter to relevant players
+   - We apply position-specific filters (e.g., QBs with 150+ pass attempts, WRs with 50+ targets)
+   - This removes low-volume players who wouldn't be relevant for fantasy anyway
+
+Output: DataFrames with features and target variables for each position, ready for modeling.
+
+PHASE 3: MODEL TRAINING AND PREDICTION
+--------------------------------------
+In this phase, we train machine learning models to predict fantasy points per week
+for each position using a Mixture of Experts (MoE) approach.
+
+Key Steps:
+1. Prepare data for modeling
+   - We shift features to use previous season's stats as predictors
+   - This means when predicting for 2024, we use 2023's stats as features
+   - This is important because we don't have 2024's stats yet at prediction time
+
+2. Split data temporally (by year)
+   - Training: All years before test year (e.g., 1999-2022 for 2024 test)
+   - Validation: Optional holdout year (e.g., 2023) or split from training
+   - Test: Target year (e.g., 2024)
+   - This is important for time series data - we can't use future data to predict the past
+
+3. Prepare features for modeling
+   - Extract feature columns (exclude metadata like season, player_id, name)
+   - Handle missing values (fill with median)
+   - Handle infinite values
+   - Ensure all features are numeric
+
+4. Train Mixture of Experts (MoE) models
+   - We train multiple models (experts) for each position:
+     * Random Forest: Tree-based ensemble, good for non-linear relationships
+     * Gradient Boosting: Sequential tree building, good for complex patterns
+     * Ridge: Linear model with regularization, good for linear relationships
+     * Linear Regression: Simple linear model, good baseline
+     * XGBoost: Advanced gradient boosting (if available), often best performer
+   - We evaluate each model on the validation set
+   - We select the best model based on MAE (Mean Absolute Error)
+   - We retrain the best model on the full training set
+
+5. Evaluate models on test set
+   - We calculate multiple metrics: MAE, RMSE, R², MAPE
+   - MAE: Average error in points (lower is better)
+   - RMSE: Penalizes large errors more (lower is better)
+   - R²: Proportion of variance explained (higher is better, 1.0 = perfect)
+   - MAPE: Percentage error (lower is better)
+
+6. Generate predictions
+   - We predict fantasy points per week for all players in the test year
+   - We combine predictions across all positions into one DataFrame
+   - We save predictions to CSV files for visibility
+
+7. Generate model comparison report
+   - We compare model performance across all positions
+   - We identify which model type works best for each position
+   - We identify best and worst performing positions
+   - We save the comparison report to CSV
+
+Output: Predictions for all players, model comparison report, and CSV files for visibility.
+
+IMPORTANT DESIGN DECISIONS
+--------------------------
+1. Temporal splitting: We split by year, not randomly, because fantasy performance
+   is time-dependent. We can't use future data to predict the past.
+
+2. Feature shifting: We use previous season's stats as predictors because we don't
+   have current season's stats at prediction time. This simulates real-world usage.
+
+3. Mixture of Experts: We train multiple models and select the best one because
+   different algorithms have different strengths. This is better than using just one model.
+
+4. Position-specific models: We train separate models for each position because
+   different positions have different features and patterns. A QB model wouldn't
+   work well for RBs.
+
+5. Filtering low-volume players: We filter out players with low usage (e.g., QBs
+   with <150 pass attempts) because they're not relevant for fantasy and their
+   stats are noisy.
+
+6. Minimum games threshold: We require at least 4 games to avoid small-sample
+   noise. A player with 1 game might have great stats but they're not reliable.
+
+7. Team normalization: We normalize team abbreviations historically to ensure
+   consistency. For example, the Rams are "STL" before 2016 and "LAR" after.
+
+8. Handling missing data: We handle missing columns gracefully because the NFL
+   data schema has evolved. Older seasons might use different column names.
+
+9. CSV output: We save CSVs for visibility even though we use dataframes directly
+   for modeling. This allows users to inspect the data and use it in other tools.
+
+10. Model selection: We select the best model based on MAE because it's intuitive
+    (average error in points). Lower MAE = better predictions.
+
+DATABASE STRUCTURE
+------------------
+The system processes the following data:
+
+Input Data:
+- NFL play-by-play data (1999-2024) from nflreadpy
+- NFL roster data (1999-2024) from nflreadpy for position identification
+
+Intermediate Data:
+- Player fantasy points (weekly and season totals)
+- Position-specific features for each player/season
+
+Output Data:
+- Position feature CSV files (QB_features.csv, RB_features.csv, etc.)
+- Predictions CSV files (fantasy_predictions_2024.csv, fantasy_predictions_2024_full.csv)
+- Model comparison report (model_comparison_report.csv)
+
+DATA FLOW
+---------
+1. Load play-by-play data for season 1999-2024
+2. Filter to regular season weeks
+3. Calculate fantasy points (player_ppr, dst_scoring, kicker_scoring)
+4. Engineer features for each position (engineer_*_features_for_season)
+5. Merge features with fantasy points (merge_position_with_targets)
+6. Save CSV files for visibility
+7. Prepare data for modeling (shift features to previous season)
+8. Split temporally (train/validation/test by year)
+9. Train MoE models (train multiple experts, select best)
+10. Evaluate on test set (calculate metrics)
+11. Generate predictions (predict for all players)
+12. Generate comparison report (compare models across positions)
+13. Save outputs to CSV
+
+KEY FUNCTIONS
+-------------
+- fantasy_week_max(): Determines maximum fantasy week for a season
+- normalize_team(): Normalizes team abbreviations historically
+- player_ppr(): Calculates PPR fantasy points for all players
+- dst_scoring(): Calculates D/ST fantasy points
+- kicker_scoring(): Calculates kicker fantasy points
+- load_positions_for(): Loads player positions from rosters (cached)
+- engineer_*_features_for_season(): Engineers features for a position and season
+- merge_position_with_targets(): Merges features with fantasy points
+- load_position_data_from_df(): Prepares data for modeling (shifts features)
+- temporal_split(): Splits data by year (train/validation/test)
+- prepare_features(): Extracts features for modeling
+- MixtureOfExperts: MoE model class that trains multiple experts and selects best
+- train_position_model_with_df(): Main training function
+- evaluate_model(): Evaluates model performance
+- generate_model_comparison_report(): Creates comparison report
+
+PERFORMANCE CONSIDERATIONS
+--------------------------
+1. Memory efficiency: We process one season at a time to manage memory
+2. Caching: We cache position data loading since it's called multiple times
+3. Downcasting: We downcast float64 to float32 to save memory
+4. Vectorization: We use vectorized pandas operations for speed
+5. Parallel processing: Models use n_jobs=-1 to use all CPU cores
+
+LIMITATIONS AND FUTURE WORK
+---------------------------
+1. The system assumes ESPN-standard PPR scoring - other scoring systems would
+   require modifications to the scoring functions
+
+2. The system uses previous season's stats as predictors - this means we can't
+   predict for players with no previous season data (rookies, etc.)
+
+3. The system doesn't account for injuries, coaching changes, or other external
+   factors that might affect performance
+
+4. The system uses a fixed test year (2024) - this could be made configurable
+
+5. The system doesn't do hyperparameter tuning - model parameters are fixed
+   (though they could be tuned for better performance)
+
+6. The system doesn't account for matchups or strength of schedule - it only
+   uses player statistics
+
+CONCLUSION
+----------
+This system provides a comprehensive pipeline for predicting fantasy football
+performance using NFL play-by-play data and machine learning. The three-phase
+approach (data preparation, feature engineering, modeling) ensures clean data,
+relevant features, and robust models. The MoE approach allows the system to
+automatically select the best model for each position, resulting in better
+predictions than using a single model.
+
+The system is designed to be educational and transparent, with extensive
+comments explaining each step. This makes it easy for other graduate students
+or researchers to understand and modify the code.
+
+For questions or improvements, please refer to the code comments or contact
+the development team.
