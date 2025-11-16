@@ -31,7 +31,7 @@ fantasy-football-draft-optimizer/
 
 1. Navigate to the frontend directory:
 ```bash
-cd frontend
+cd 'path to frontend folder'
 ```
 
 2. Install dependencies:
