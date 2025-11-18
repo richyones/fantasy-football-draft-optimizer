@@ -9,79 +9,79 @@ const BigBoard = ({ onDraftPlayer, draftedPlayerNames = [], isUserTurn = false }
   const [playerData, setPlayerData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Load CSV data
+
   useEffect(() => {
     const loadCSVData = async () => {
       try {
-        // Load both CSVs
+
         const [draftBoardResponse, playerInfoResponse] = await Promise.all([
           fetch(`${process.env.PUBLIC_URL}/player_adp_optimized_FINAL.csv`),
           fetch(`${process.env.PUBLIC_URL}/nfl_player_information.csv`)
         ]);
-        
+
         const draftBoardText = await draftBoardResponse.text();
         const playerInfoText = await playerInfoResponse.text();
-        
-        // Parse player information CSV to create lookup map
+
+
         const playerInfoLines = playerInfoText.split('\n').filter(line => line.trim());
         const playerInfoHeaders = playerInfoLines[0].split(',');
         const playerInfoNameIndex = playerInfoHeaders.findIndex(h => h.includes('Player Name'));
         const playerInfoTeamIndex = playerInfoHeaders.findIndex(h => h === 'Team');
         const playerInfoByeIndex = playerInfoHeaders.findIndex(h => h.includes('Bye'));
-        
+
         const playerInfoMap = {};
         for (let i = 1; i < playerInfoLines.length; i++) {
           const line = playerInfoLines[i];
           if (!line.trim()) continue;
-          
+
           const values = line.split(',').map(v => v.trim());
           if (values.length > Math.max(playerInfoNameIndex, playerInfoTeamIndex, playerInfoByeIndex)) {
             const name = values[playerInfoNameIndex];
             const team = values[playerInfoTeamIndex];
             const bye = parseInt(values[playerInfoByeIndex]) || 0;
-            
+
             if (name) {
               playerInfoMap[name] = { team, bye };
             }
           }
         }
-        
-        // Parse draft board CSV
+
+
         const lines = draftBoardText.split('\n').filter(line => line.trim());
         const headers = lines[0].split(',');
-        
-        // Find column indices (support both old and new CSV formats)
+
+
         const nameIndex = headers.findIndex(h => h.includes('Player Name') || h.toLowerCase() === 'player');
         const positionIndex = headers.findIndex(h => h.includes('Player Position') || h.toLowerCase() === 'position');
         const pointsIndex = headers.findIndex(h => h.includes('Projected Average Fantasy Points Per Week') || h.toLowerCase().includes('proj_points') || h.toLowerCase().includes('proj points'));
-        
-        // Parse CSV data
+
+
         const parsedData = [];
         for (let i = 1; i < lines.length; i++) {
           const line = lines[i];
           if (!line.trim()) continue;
-          
-          // Simple CSV parsing (split by comma, trim whitespace)
+
+
           const values = line.split(',').map(v => v.trim());
-          
+
           if (values.length > Math.max(nameIndex, positionIndex, pointsIndex)) {
             const name = values[nameIndex];
             let position = values[positionIndex];
             const weeklyPts = parseFloat(values[pointsIndex]) || 0;
-            
-            // Normalize position values (handle D/ST vs DST)
+
+
             if (position && (position.toUpperCase() === 'D/ST' || position.toUpperCase() === 'DST')) {
               position = 'DST';
             }
-            
+
             if (name && position && !isNaN(weeklyPts)) {
-              // Convert weekly points to season total (17 weeks)
-              // Both "Projected Average Fantasy Points Per Week" and "proj_points" are weekly averages
+
+
               const seasonPts = weeklyPts * 17;
-              
-              // Join with player information
+
+
               const playerInfo = playerInfoMap[name] || {};
-              
+
               parsedData.push({
                 name: name,
                 position: position,
@@ -92,8 +92,8 @@ const BigBoard = ({ onDraftPlayer, draftedPlayerNames = [], isUserTurn = false }
             }
           }
         }
-        
-        // Keep the CSV order as rankings (don't sort by points)
+
+
         const rankedData = parsedData.map((player, index) => ({
           rank: index + 1,
           name: player.name,
@@ -109,21 +109,21 @@ const BigBoard = ({ onDraftPlayer, draftedPlayerNames = [], isUserTurn = false }
           int: '-',
           ru: '-'
         }));
-        
+
         setPlayerData(rankedData);
         setLoading(false);
       } catch (error) {
         console.error('Error loading CSV data:', error);
-        // Fallback to empty array or default data
+
         setPlayerData([]);
         setLoading(false);
       }
     };
-    
+
     loadCSVData();
   }, []);
 
-  // Fallback player database (if CSV fails to load)
+
   const fallbackPlayerData = [
     { rank: 1, name: 'Christian McCaffrey', team: 'SF', position: 'RB', bye: 9, pts: 285.5, rush: 305 },
     { rank: 2, name: 'Tyreek Hill', team: 'MIA', position: 'WR', bye: 10, pts: 278.2, rush: '-' },
@@ -192,9 +192,9 @@ const BigBoard = ({ onDraftPlayer, draftedPlayerNames = [], isUserTurn = false }
     { rank: 65, name: 'Harrison Butker', team: 'KC', position: 'K', bye: 8, pts: 138.0, rush: '-' },
   ];
 
-  // Use loaded playerData or fallback
+
   const dataToUse = playerData.length > 0 ? playerData : fallbackPlayerData;
-  
+
   const players = dataToUse.map(p => ({
     ...p,
     drafted: false,
@@ -213,11 +213,11 @@ const BigBoard = ({ onDraftPlayer, draftedPlayerNames = [], isUserTurn = false }
     const matchesSearch = player.name.toLowerCase().includes(searchTerm.toLowerCase());
     const isDrafted = draftedPlayerNames.includes(player.name);
     const matchesDrafted = showDrafted || !isDrafted;
-    
+
     return matchesPosition && matchesTeam && matchesSearch && matchesDrafted;
   });
 
-  // Get best available player for autopick suggestion
+
   const bestAvailable = filteredPlayers.find(p => !draftedPlayerNames.includes(p.name));
 
   if (loading) {
@@ -245,7 +245,7 @@ const BigBoard = ({ onDraftPlayer, draftedPlayerNames = [], isUserTurn = false }
             </div>
           </div>
         )}
-        
+
         <div className="filters">
           <select value={selectedPosition} onChange={(e) => setSelectedPosition(e.target.value)}>
             <option value="All Pos.">All Pos.</option>
@@ -256,7 +256,7 @@ const BigBoard = ({ onDraftPlayer, draftedPlayerNames = [], isUserTurn = false }
             <option value="K">K</option>
             <option value="DST">DST</option>
           </select>
-          
+
           <select value={selectedTeam} onChange={(e) => setSelectedTeam(e.target.value)}>
             <option value="All NFL Teams">All NFL Teams</option>
             <option value="SF">SF</option>
@@ -275,18 +275,18 @@ const BigBoard = ({ onDraftPlayer, draftedPlayerNames = [], isUserTurn = false }
             <option value="DAL">DAL</option>
             <option value="PIT">PIT</option>
           </select>
-          
-          <input 
-            type="text" 
-            placeholder="Q Player Name" 
+
+          <input
+            type="text"
+            placeholder="Q Player Name"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
           />
-          
+
           <label className="toggle-label">
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               checked={showDrafted}
               onChange={(e) => setShowDrafted(e.target.checked)}
             />
@@ -294,7 +294,7 @@ const BigBoard = ({ onDraftPlayer, draftedPlayerNames = [], isUserTurn = false }
           </label>
         </div>
       </div>
-      
+
       <div className="players-table">
         <table>
           <thead>
@@ -324,8 +324,8 @@ const BigBoard = ({ onDraftPlayer, draftedPlayerNames = [], isUserTurn = false }
                 <td>{player.bye}</td>
                 <td>{player.pts}</td>
                 <td>
-                  <button 
-                    className="draft-btn" 
+                  <button
+                    className="draft-btn"
                     onClick={() => handleDraft(player)}
                     disabled={draftedPlayerNames.includes(player.name) || !isUserTurn}
                   >

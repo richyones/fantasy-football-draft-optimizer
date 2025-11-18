@@ -53,7 +53,7 @@ function App() {
     setDraftStarted(true);
     setDraftComplete(false);
     setTimeRemaining(draftSettings.pickTime);
-    // Check if user picks first
+
     const userPickPosition = draftSettings.startingPickNumber;
     setIsUserTurn(userPickPosition === 1);
   };
@@ -69,103 +69,103 @@ function App() {
     setRejectedPlayerNames([...rejectedPlayerNames, playerName]);
   };
 
-  // Calculate how many picks until user's next turn
+
   const getPicksUntilUserTurn = () => {
     if (isUserTurn) return 0;
-    
+
     const { numTeams, startingPickNumber } = draftSettings;
     let picksAway = 0;
     let checkPickNum = currentPickNumber;
-    
-    // Look ahead up to 2 rounds to find next user pick
+
+
     for (let i = 0; i < numTeams * 2; i++) {
       checkPickNum++;
       picksAway++;
-      
+
       if (checkIfUserTurn(checkPickNum)) {
         return picksAway;
       }
     }
-    
+
     return picksAway;
   };
 
-  // Get smart Top 3 based on projected availability
+
   const getSmartTop3 = () => {
-    // Ensure allPlayersRef.current is initialized and is an array
+
     if (!allPlayersRef.current || !Array.isArray(allPlayersRef.current)) {
       return [];
     }
-    
+
     const availablePlayers = allPlayersRef.current.filter(
       p => !draftedPlayerNames.includes(p.name) && !rejectedPlayerNames.includes(p.name)
     );
-    
-    // If no available players, return empty array
+
+
     if (availablePlayers.length === 0) {
       return [];
     }
-    
-    // Check if bench is full
-    const benchIsFull = roster.BE1 && roster.BE2 && roster.BE3 && roster.BE4 && 
+
+
+    const benchIsFull = roster.BE1 && roster.BE2 && roster.BE3 && roster.BE4 &&
                        roster.BE5 && roster.BE6 && roster.BE7;
-    
-    // Filter out positions that are filled in starting lineup AND bench is full
+
+
     const filteredPlayers = availablePlayers.filter(player => {
-      if (!benchIsFull) return true; // If bench isn't full, recommend all positions
-      
+      if (!benchIsFull) return true;
+
       const position = player.position;
-      
-      // Check if position is filled in starting lineup
+
+
       if (position === 'QB') {
-        return !roster.QB; // Don't recommend if QB is filled
+        return !roster.QB;
       } else if (position === 'RB') {
-        // RB can fill RB1, RB2, or FLX - don't recommend if all are filled
+
         return !(roster.RB1 && roster.RB2 && roster.FLX);
       } else if (position === 'WR') {
-        // WR can fill WR1, WR2, or FLX - don't recommend if all are filled
+
         return !(roster.WR1 && roster.WR2 && roster.FLX);
       } else if (position === 'TE') {
-        // TE can fill TE or FLX - don't recommend if both are filled
+
         return !(roster.TE && roster.FLX);
       } else if (position === 'DST') {
-        return !roster.DST; // Don't recommend if DST is filled
+        return !roster.DST;
       } else if (position === 'K') {
-        return !roster.K; // Don't recommend if K is filled
+        return !roster.K;
       }
-      
-      return true; // Default: include position
+
+      return true;
     });
-    
-    // If no filtered players, return empty array
+
+
     if (filteredPlayers.length === 0) {
       return [];
     }
-    
+
     const picksAway = getPicksUntilUserTurn();
-    
-    // If it's user's turn, show top 3 available (or fewer if not enough players)
+
+
     if (picksAway === 0) {
       return filteredPlayers.slice(0, Math.min(3, filteredPlayers.length));
     }
-    
-    // Otherwise, estimate which players will still be available
-    // Add buffer: assume best players will be taken before user's turn
+
+
+
     const estimatedPicksBeforeUserTurn = Math.max(0, picksAway - 1);
     const maxStartIndex = Math.max(0, filteredPlayers.length - 3);
     const startIndex = Math.min(estimatedPicksBeforeUserTurn, maxStartIndex);
     const endIndex = Math.min(startIndex + 3, filteredPlayers.length);
-    
+
     return filteredPlayers.slice(startIndex, endIndex);
   };
 
-  // Check if a player from user's Top 3 was stolen
+
   const checkTop3Stolen = (newPick) => {
-    // Only check if it wasn't the user who drafted
+
     if (isUserTurn) return;
-    
+
     const top3Names = currentTop3.map(p => p.name);
-    
+
     if (top3Names.includes(newPick.name)) {
       const newAlert = {
         id: Date.now(),
@@ -173,19 +173,19 @@ function App() {
         message: `😱 Your Top 3 was stolen! ${newPick.name} (${newPick.position}) was taken by ${newPick.teamName}`,
         timestamp: new Date().toLocaleTimeString()
       };
-      
+
       setAlerts([newAlert, ...alerts]);
     }
   };
 
-  // Check for herd warning (3+ consecutive picks of same position)
+
   const checkHerdWarning = (newPick) => {
     if (pickHistory.length < 2) return;
 
     const recentPicks = [newPick, ...pickHistory.slice(0, 2)];
     const positions = recentPicks.map(p => p.position);
-    
-    // Check if all 3 positions are the same
+
+
     if (positions[0] === positions[1] && positions[1] === positions[2]) {
       const positionName = positions[0] === 'RB' ? 'Running Backs' :
                           positions[0] === 'WR' ? 'Wide Receivers' :
@@ -193,123 +193,123 @@ function App() {
                           positions[0] === 'TE' ? 'Tight Ends' :
                           positions[0] === 'K' ? 'Kickers' :
                           positions[0] === 'DST' ? 'Defenses' : positions[0];
-      
+
       const newAlert = {
         id: Date.now(),
         type: 'herd',
         message: `🚨 Herd Warning: 3 consecutive ${positionName} picked!`,
         timestamp: new Date().toLocaleTimeString()
       };
-      
+
       setAlerts([newAlert, ...alerts]);
     }
   };
 
-  // Get current team name based on pick number
+
   const getCurrentTeamName = (pickNum) => {
     const { numTeams, startingPickNumber } = draftSettings;
     const round = Math.ceil(pickNum / numTeams);
-    const isSnakeDraft = round % 2 === 0; // Even rounds go in reverse
-    
+    const isSnakeDraft = round % 2 === 0;
+
     let positionInRound = ((pickNum - 1) % numTeams) + 1;
     if (isSnakeDraft) {
       positionInRound = numTeams - positionInRound + 1;
     }
-    
-    // Check if it's user's turn
+
+
     const isUserPick = positionInRound === startingPickNumber;
     if (isUserPick) {
       return 'Your team';
     }
-    
+
     return `Team ${positionInRound}`;
   };
 
-  // Check if current pick is user's turn
+
   const checkIfUserTurn = (pickNum) => {
     const { numTeams, startingPickNumber } = draftSettings;
     const round = Math.ceil(pickNum / numTeams);
     const isSnakeDraft = round % 2 === 0;
-    
+
     let positionInRound = ((pickNum - 1) % numTeams) + 1;
     if (isSnakeDraft) {
       positionInRound = numTeams - positionInRound + 1;
     }
-    
+
     return positionInRound === startingPickNumber;
   };
 
-  // Load CSV data for all players
+
   useEffect(() => {
     const loadCSVData = async () => {
       try {
-        // Load both CSVs
+
         const [draftBoardResponse, playerInfoResponse] = await Promise.all([
           fetch(`${process.env.PUBLIC_URL}/player_adp_optimized_FINAL.csv`),
           fetch(`${process.env.PUBLIC_URL}/nfl_player_information.csv`)
         ]);
-        
+
         const draftBoardText = await draftBoardResponse.text();
         const playerInfoText = await playerInfoResponse.text();
-        
-        // Parse player information CSV to create lookup map
+
+
         const playerInfoLines = playerInfoText.split('\n').filter(line => line.trim());
         const playerInfoHeaders = playerInfoLines[0].split(',');
         const playerInfoNameIndex = playerInfoHeaders.findIndex(h => h.includes('Player Name'));
         const playerInfoTeamIndex = playerInfoHeaders.findIndex(h => h === 'Team');
         const playerInfoByeIndex = playerInfoHeaders.findIndex(h => h.includes('Bye'));
-        
+
         const playerInfoMap = {};
         for (let i = 1; i < playerInfoLines.length; i++) {
           const line = playerInfoLines[i];
           if (!line.trim()) continue;
-          
+
           const values = line.split(',').map(v => v.trim());
           if (values.length > Math.max(playerInfoNameIndex, playerInfoTeamIndex, playerInfoByeIndex)) {
             const name = values[playerInfoNameIndex];
             const team = values[playerInfoTeamIndex];
             const bye = parseInt(values[playerInfoByeIndex]) || 0;
-            
+
             if (name) {
               playerInfoMap[name] = { team, bye };
             }
           }
         }
-        
-        // Parse draft board CSV
+
+
         const lines = draftBoardText.split('\n').filter(line => line.trim());
         const headers = lines[0].split(',');
-        
-        // Find column indices (support both old and new CSV formats)
+
+
         const nameIndex = headers.findIndex(h => h.includes('Player Name') || h.toLowerCase() === 'player');
         const positionIndex = headers.findIndex(h => h.includes('Player Position') || h.toLowerCase() === 'position');
         const pointsIndex = headers.findIndex(h => h.includes('Projected Average Fantasy Points Per Week') || h.toLowerCase().includes('proj_points') || h.toLowerCase().includes('proj points'));
-        
-        // Parse CSV data
+
+
         const parsedData = [];
         for (let i = 1; i < lines.length; i++) {
           const line = lines[i];
           if (!line.trim()) continue;
-          
+
           const values = line.split(',').map(v => v.trim());
-          
+
           if (values.length > Math.max(nameIndex, positionIndex, pointsIndex)) {
             const name = values[nameIndex];
             let position = values[positionIndex];
             const weeklyPts = parseFloat(values[pointsIndex]) || 0;
-            
-            // Normalize position values (handle D/ST vs DST)
+
+
             if (position && (position.toUpperCase() === 'D/ST' || position.toUpperCase() === 'DST')) {
               position = 'DST';
             }
-            
+
             if (name && position && !isNaN(weeklyPts)) {
-              // Convert weekly points to season total (17 weeks)
+
               const seasonPts = weeklyPts * 17;
-              
-              // Join with player information
+
+
               const playerInfo = playerInfoMap[name] || {};
-              
+
               parsedData.push({
                 name: name,
                 position: position,
@@ -320,8 +320,8 @@ function App() {
             }
           }
         }
-        
-        // Keep the CSV order as rankings (don't sort by points)
+
+
         const rankedData = parsedData.map((player, index) => ({
           rank: index + 1,
           name: player.name,
@@ -337,21 +337,21 @@ function App() {
           int: '-',
           ru: '-'
         }));
-        
+
         allPlayersRef.current = rankedData;
         console.log(`Successfully loaded ${rankedData.length} players from player_adp_optimized_FINAL.csv`);
         setDataLoaded(true);
       } catch (error) {
         console.error('Error loading CSV data:', error);
-        // Keep fallback data if CSV fails
-        setDataLoaded(true); // Still mark as loaded even if using fallback
+
+        setDataLoaded(true);
       }
     };
-    
+
     loadCSVData();
   }, []);
 
-  // All available players for CPU to draft from (fallback data)
+
   const fallbackPlayers = [
     { rank: 1, name: 'Christian McCaffrey', team: 'SF', position: 'RB', bye: 9, pts: 285.5, rush: 305 },
     { rank: 2, name: 'Tyreek Hill', team: 'MIA', position: 'WR', bye: 10, pts: 278.2, rush: '-' },
@@ -420,14 +420,14 @@ function App() {
     { rank: 65, name: 'Harrison Butker', team: 'KC', position: 'K', bye: 8, pts: 138.0, rush: '-' },
   ];
 
-  // All available players for CPU to draft from
+
   const allPlayersRef = useRef(fallbackPlayers);
 
-  // Timer effect
+
   useEffect(() => {
     if (!draftStarted || draftComplete) return;
-    
-    // Check if draft is complete
+
+
     const totalPicks = draftSettings.numTeams * 16;
     if (currentPickNumber > totalPicks) {
       return;
@@ -435,14 +435,14 @@ function App() {
 
     const timer = setInterval(() => {
       setTimeRemaining((prev) => {
-        // Check again if draft is complete
+
         const totalPicks = draftSettings.numTeams * 16;
         if (currentPickNumber > totalPicks || draftComplete) {
           return prev;
         }
-        
+
         if (prev <= 1) {
-          // Time's up! Auto-draft if it's user's turn, otherwise CPU drafts
+
           if (isUserTurn) {
             autoDraftForUser();
           } else {
@@ -457,12 +457,12 @@ function App() {
     return () => clearInterval(timer);
   }, [draftStarted, draftComplete, isUserTurn, currentPickNumber, draftSettings.pickTime, draftSettings.numTeams]);
 
-  // Auto-draft for user when time runs out
+
   const autoDraftForUser = () => {
     if (!allPlayersRef.current || !Array.isArray(allPlayersRef.current)) {
       return;
     }
-    
+
     const availablePlayers = allPlayersRef.current.filter(
       p => !draftedPlayerNames.includes(p.name)
     );
@@ -472,33 +472,33 @@ function App() {
     }
   };
 
-  // CPU drafting logic
+
   const cpuDraft = () => {
     if (!allPlayersRef.current || !Array.isArray(allPlayersRef.current)) {
       return;
     }
-    
+
     const availablePlayers = allPlayersRef.current.filter(
       p => !draftedPlayerNames.includes(p.name)
     );
-    
+
     if (availablePlayers.length > 0) {
-      // CPU picks best available with slight randomization
+
       const randomIndex = Math.floor(Math.random() * Math.min(3, availablePlayers.length));
       const cpuPick = availablePlayers[randomIndex];
       draftPlayerCPU(cpuPick);
     }
   };
 
-  // Draft player (called by user clicking DRAFT button)
+
   const draftPlayer = (player, isAutoPick = false) => {
-    // Check if draft is complete
+
     if (draftComplete) return;
     const totalPicks = draftSettings.numTeams * 16;
     if (currentPickNumber > totalPicks) {
       return;
     }
-    
+
     const teamName = getCurrentTeamName(currentPickNumber);
     const newPick = {
       ...player,
@@ -506,32 +506,32 @@ function App() {
       teamName: teamName,
       round: currentRound
     };
-    
-    // Check for alerts before adding to history
+
+
     checkTop3Stolen(newPick);
     checkHerdWarning(newPick);
-    
+
     setPickHistory([newPick, ...pickHistory]);
     setDraftedPlayerNames([...draftedPlayerNames, player.name]);
-    
-    // Only update roster if it's the user's pick
+
+
     if (isUserTurn || isAutoPick) {
       updateRoster(player);
     }
 
-    // Move to next pick
+
     advancePick();
   };
 
-  // Draft player (called by CPU)
+
   const draftPlayerCPU = (player) => {
-    // Check if draft is complete
+
     if (draftComplete) return;
     const totalPicks = draftSettings.numTeams * 16;
     if (currentPickNumber > totalPicks) {
       return;
     }
-    
+
     const teamName = getCurrentTeamName(currentPickNumber);
     const newPick = {
       ...player,
@@ -539,23 +539,23 @@ function App() {
       teamName: teamName,
       round: currentRound
     };
-    
-    // Check for alerts before adding to history
+
+
     checkTop3Stolen(newPick);
     checkHerdWarning(newPick);
-    
+
     setPickHistory([newPick, ...pickHistory]);
     setDraftedPlayerNames([...draftedPlayerNames, player.name]);
 
-    // Move to next pick
+
     advancePick();
   };
 
-  // Update user's roster
+
   const updateRoster = (player) => {
     const position = player.position;
-    
-    // Try to fill starting positions first
+
+
     if (position === 'QB' && !roster.QB) {
       setRoster({...roster, QB: player});
     } else if (position === 'RB') {
@@ -595,56 +595,56 @@ function App() {
     }
   };
 
-  // Advance to next pick
+
   const advancePick = () => {
     if (draftComplete) return;
-    
-    const totalPicks = draftSettings.numTeams * 16; // 16 rounds = 16 players per team
-    
-    // Check if draft is complete
+
+    const totalPicks = draftSettings.numTeams * 16;
+
+
     if (currentPickNumber >= totalPicks) {
-      // Draft is complete, but don't change draftStarted - let the useEffect handle it
+
       return;
     }
-    
+
     const nextPickNumber = currentPickNumber + 1;
     const nextRound = Math.ceil(nextPickNumber / draftSettings.numTeams);
-    
-    // Don't advance if we've exceeded total picks
+
+
     if (nextPickNumber > totalPicks) {
       return;
     }
-    
+
     setCurrentPickNumber(nextPickNumber);
     setCurrentRound(nextRound);
     setTimeRemaining(draftSettings.pickTime);
-    
-    // Check if next pick is user's turn
+
+
     const nextIsUserTurn = checkIfUserTurn(nextPickNumber);
     setIsUserTurn(nextIsUserTurn);
   };
 
-  // Handle CPU auto-drafting when it's not user's turn
+
   useEffect(() => {
     if (!draftStarted || isUserTurn || draftComplete) return;
-    
-    // Check if draft is complete
+
+
     const totalPicks = draftSettings.numTeams * 16;
     if (currentPickNumber > totalPicks) {
       return;
     }
-    
+
     if (!allPlayersRef.current || !Array.isArray(allPlayersRef.current)) {
       return;
     }
 
     const cpuDraftTimer = setTimeout(() => {
-      // Check again if draft is complete
+
       const totalPicks = draftSettings.numTeams * 16;
       if (currentPickNumber > totalPicks || draftComplete) {
         return;
       }
-      
+
       const availablePlayers = allPlayersRef.current.filter(
         p => !draftedPlayerNames.includes(p.name)
       );
@@ -653,12 +653,12 @@ function App() {
         const cpuPick = availablePlayers[randomIndex];
         draftPlayerCPU(cpuPick);
       }
-    }, 2000); // 2 second delay for CPU picks
+    }, 2000);
 
     return () => clearTimeout(cpuDraftTimer);
   }, [currentPickNumber, isUserTurn, draftStarted, draftComplete, draftSettings.numTeams]);
 
-  // Update Top 3 whenever draft state changes or data loads
+
   useEffect(() => {
     if (draftStarted && dataLoaded) {
       const newTop3 = getSmartTop3();
@@ -684,54 +684,54 @@ function App() {
     }
   };
 
-  // Check if roster is full (all 16 spots filled: 9 starting + 7 bench)
+
   const isRosterFull = () => {
     const startingPositions = ['QB', 'RB1', 'RB2', 'WR1', 'WR2', 'TE', 'FLX', 'DST', 'K'];
     const benchPositions = ['BE1', 'BE2', 'BE3', 'BE4', 'BE5', 'BE6', 'BE7'];
     const allPositions = [...startingPositions, ...benchPositions];
-    
+
     return allPositions.every(pos => roster[pos] !== null);
   };
 
-  // Check if all teams have filled their rosters (16 picks each)
+
   const areAllTeamsFull = () => {
     const numTeams = draftSettings.numTeams;
     const picksPerTeam = {};
-    
-    // Initialize pick counts for all teams
+
+
     for (let i = 1; i <= numTeams; i++) {
       picksPerTeam[i] = 0;
     }
-    
-    // Count picks per team from pickHistory
+
+
     pickHistory.forEach(pick => {
       const pickNum = pick.pickNumber;
       const round = pick.round || Math.ceil(pickNum / numTeams);
-      const isSnakeDraft = round % 2 === 0; // Even rounds go in reverse
-      
-      // Calculate which team made this pick (same logic as getCurrentTeamName)
+      const isSnakeDraft = round % 2 === 0;
+
+
       let positionInRound = ((pickNum - 1) % numTeams) + 1;
       if (isSnakeDraft) {
         positionInRound = numTeams - positionInRound + 1;
       }
-      
-      // positionInRound is the team number (1 to numTeams)
+
+
       if (positionInRound >= 1 && positionInRound <= numTeams) {
         picksPerTeam[positionInRound]++;
       }
     });
-    
-    // Check if all teams have 16 picks
+
+
     return Object.values(picksPerTeam).every(count => count >= 16);
   };
 
-  // Check if draft should end (user roster full AND all teams full)
+
   useEffect(() => {
     if (!draftStarted) return;
-    
+
     const userRosterFull = isRosterFull();
     const allTeamsFull = areAllTeamsFull();
-    
+
     console.log('Draft status check:', {
       draftStarted,
       userRosterFull,
@@ -739,11 +739,11 @@ function App() {
       pickHistoryLength: pickHistory.length,
       numTeams: draftSettings.numTeams
     });
-    
+
     if (userRosterFull && allTeamsFull) {
       console.log('Draft complete! User roster full and all teams full.');
       setDraftComplete(true);
-      // Don't set draftStarted to false - keep the draft interface visible
+
     }
   }, [draftStarted, pickHistory, roster, draftSettings.numTeams]);
 
@@ -753,13 +753,13 @@ function App() {
     } else if (activeView === 'analytics') {
       return <Analytics allPlayers={allPlayersRef.current || []} draftedPlayerNames={draftedPlayerNames} draftSettings={draftSettings} roster={roster} />;
     } else {
-      // Check if roster is full
+
       if (isRosterFull()) {
         return (
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
             height: '100%',
             fontSize: '24px',
             fontWeight: 'bold',
@@ -769,10 +769,10 @@ function App() {
           </div>
         );
       }
-      
+
       return (
-        <BigBoard 
-          onDraftPlayer={draftPlayer} 
+        <BigBoard
+          onDraftPlayer={draftPlayer}
           draftedPlayerNames={draftedPlayerNames}
           isUserTurn={isUserTurn}
         />
@@ -780,19 +780,19 @@ function App() {
     }
   };
 
-  // Show setup screen if draft hasn't started (but not if draft is complete)
+
   if (!draftStarted && !draftComplete) {
     return (
       <div className="App">
         <div className="header">
           <h1>Fantasy Football Draft Optimizer</h1>
         </div>
-        
+
         <div className="setup-container">
           <div className="setup-card">
             <h2>Draft Setup</h2>
             <p className="setup-subtitle">Configure your draft settings to begin</p>
-            
+
             <div className="setup-form">
               <div className="form-group">
                 <label htmlFor="pickTime">Pick Time (seconds)</label>
@@ -808,7 +808,7 @@ function App() {
                 </select>
                 <span className="form-help">Time allowed per pick</span>
               </div>
-              
+
               <div className="form-group">
                 <label htmlFor="numTeams">Number of Teams</label>
                 <select
@@ -825,7 +825,7 @@ function App() {
                 </select>
                 <span className="form-help">Total number of teams in the draft</span>
               </div>
-              
+
               <div className="form-group">
                 <label htmlFor="startingPick">Your Starting Pick Number</label>
                 <input
@@ -839,7 +839,7 @@ function App() {
                 />
                 <span className="form-help">Your position in the draft order (1-{draftSettings.numTeams})</span>
               </div>
-              
+
               <button onClick={handleStartDraft} className="start-draft-button">
                 Start Draft
               </button>
@@ -855,7 +855,7 @@ function App() {
       <div className="header">
         <h1>Fantasy Football Draft Optimizer</h1>
       </div>
-      
+
       {draftComplete && (
         <div style={{
           backgroundColor: 'rgb(179, 163, 105)',
@@ -869,7 +869,7 @@ function App() {
           🎉 Draft Complete! All teams have filled their rosters. 🎉
         </div>
       )}
-      
+
       <div className="draft-status-bar">
         <div className="draft-info">
           <div className="round-info">
@@ -887,7 +887,7 @@ function App() {
             </div>
           </div>
         </div>
-        
+
         <div className="upcoming-picks">
           {[...Array(Math.max(0, Math.min(9, draftSettings.numTeams * 16 - currentPickNumber)))].map((_, i) => {
             const pickNum = currentPickNumber + i + 1;
@@ -896,7 +896,7 @@ function App() {
             const showRoundSeparator = round !== prevRound && i > 0;
             const teamName = getCurrentTeamName(pickNum);
             const isUserPick = checkIfUserTurn(pickNum);
-            
+
             return (
               <React.Fragment key={pickNum}>
                 {showRoundSeparator && <div className="round-separator">ROUND {round}</div>}
@@ -914,7 +914,7 @@ function App() {
           })}
         </div>
       </div>
-      
+
       <div className="main-layout">
         <div className="main-content">
           <div className="roster-panel">
@@ -1048,9 +1048,9 @@ function App() {
                   ) : null}
                 </div>
               </div>
-              
+
               <div className="bench-divider">BENCH</div>
-              
+
               <div className="position-slot">
                 <span className="position-label">BE</span>
                 <div className={`player-field ${roster.BE1 ? 'filled' : ''}`}>
@@ -1144,7 +1144,7 @@ function App() {
               </div>
             </div>
           </div>
-          
+
           <div className="top3-panel">
             <h3>Your Top 3</h3>
             <div className="player-cards">
@@ -1159,14 +1159,14 @@ function App() {
                       </div>
                     </div>
                     <div className="top3-card-actions">
-                      <button 
+                      <button
                         className="draft-button"
                         onClick={() => isUserTurn && draftPlayer(player)}
                         disabled={!isUserTurn}
                       >
                         Draft
                       </button>
-                      <button 
+                      <button
                         className="close-button"
                         onClick={() => handleRejectPlayer(player.name)}
                       >
@@ -1177,22 +1177,22 @@ function App() {
                 ))}
             </div>
           </div>
-          
+
           <div className="big-board-panel">
             <div className="panel-tabs">
-              <div 
+              <div
                 className={`panel-tab ${activeView === 'big-board' ? 'active' : ''}`}
                 onClick={() => setActiveView('big-board')}
               >
                 Your Big Board
               </div>
-              <div 
+              <div
                 className={`panel-tab ${activeView === 'overall-picks' ? 'active' : ''}`}
                 onClick={() => setActiveView('overall-picks')}
               >
                 Overall Picks
               </div>
-              <div 
+              <div
                 className={`panel-tab ${activeView === 'analytics' ? 'active' : ''}`}
                 onClick={() => setActiveView('analytics')}
               >
@@ -1202,7 +1202,7 @@ function App() {
             {renderBigBoardContent()}
           </div>
         </div>
-        
+
         <div className="sidebar">
             <div className="picks-panel">
               <h3>Picks</h3>
@@ -1222,7 +1222,7 @@ function App() {
                 )}
               </div>
             </div>
-            
+
             <div className="alerts-panel">
               <h3>Alerts</h3>
               <div className="alerts-list">

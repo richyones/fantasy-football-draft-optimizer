@@ -6,7 +6,7 @@ const OverallPicks = ({ pickHistory = [], draftSettings }) => {
   const startingPickNumber = draftSettings?.startingPickNumber || 1;
   const totalRounds = 16;
 
-  // Generate team names - identify user's team
+
   const teams = Array.from({ length: numTeams }, (_, i) => {
     const teamNumber = i + 1;
     const isUserTeam = teamNumber === startingPickNumber;
@@ -17,27 +17,27 @@ const OverallPicks = ({ pickHistory = [], draftSettings }) => {
     };
   });
 
-  // Organize picks by team (columns)
+
   const organizePicksByTeam = () => {
     const teamPicks = [];
-    
+
     for (let teamIndex = 0; teamIndex < numTeams; teamIndex++) {
       const picks = [];
-      
+
       for (let round = 1; round <= totalRounds; round++) {
-        const isSnakeDraft = round % 2 === 0; // Even rounds go reverse
+        const isSnakeDraft = round % 2 === 0;
         let actualTeamIndex = teamIndex;
-        
-        // Adjust team index for snake draft
+
+
         if (isSnakeDraft) {
           actualTeamIndex = numTeams - 1 - teamIndex;
         }
-        
+
         const pickNumber = (round - 1) * numTeams + actualTeamIndex;
         const pick = pickHistory.find(p => p.pickNumber === pickNumber + 1);
-        
+
         if (pick) {
-          const positionColor = 
+          const positionColor =
             pick.position === 'QB' ? 'pink' :
             pick.position === 'RB' ? 'lightgreen' :
             pick.position === 'WR' ? 'darkblue' :
@@ -45,7 +45,7 @@ const OverallPicks = ({ pickHistory = [], draftSettings }) => {
             pick.position === 'K' ? 'purple' :
             pick.position === 'DST' ? 'teal' :
             'gray';
-          
+
           picks.push({
             player: pick.name,
             pos: pick.position,
@@ -55,7 +55,7 @@ const OverallPicks = ({ pickHistory = [], draftSettings }) => {
             color: positionColor
           });
         } else {
-          // Empty slot for picks not made yet
+
           picks.push({
             player: '-',
             pos: '',
@@ -66,10 +66,10 @@ const OverallPicks = ({ pickHistory = [], draftSettings }) => {
           });
         }
       }
-      
+
       teamPicks.push(picks);
     }
-    
+
     return teamPicks;
   };
 
@@ -78,20 +78,20 @@ const OverallPicks = ({ pickHistory = [], draftSettings }) => {
   return (
     <div className="overall-picks">
       <div className="draft-board">
-        {/* Teams as columns with picks stacked vertically */}
-        <div 
+        
+        <div
           className="teams-container"
           style={{ gridTemplateColumns: `repeat(${numTeams}, 90px)` }}
         >
           {teams.map((team, teamIndex) => (
             <div key={teamIndex} className="team-column">
-              {/* Team header */}
+              
               <div className={`team-header ${team.isUserTeam ? 'user-team' : ''}`}>
                 <div className="team-icon">{team.icon}</div>
                 <div className="team-name">{team.name}</div>
               </div>
+
               
-              {/* Picks for this team */}
               <div className="team-picks">
                 {teamPicks[teamIndex].map((pick, pickIndex) => (
                   <div key={pickIndex} className="player-card-container">
