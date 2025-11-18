@@ -8,7 +8,7 @@ function App() {
   const [draftStarted, setDraftStarted] = useState(false);
   const [draftComplete, setDraftComplete] = useState(false);
   const [draftSettings, setDraftSettings] = useState({
-    pickTime: 3,
+    pickTime: 30,
     numTeams: 12,
     startingPickNumber: 1
   });
@@ -17,7 +17,7 @@ function App() {
   const [draftedPlayerNames, setDraftedPlayerNames] = useState([]);
   const [currentPickNumber, setCurrentPickNumber] = useState(1);
   const [currentRound, setCurrentRound] = useState(1);
-  const [timeRemaining, setTimeRemaining] = useState(3);
+  const [timeRemaining, setTimeRemaining] = useState(30);
   const [isUserTurn, setIsUserTurn] = useState(false);
   const [rejectedPlayerNames, setRejectedPlayerNames] = useState([]);
   const [alerts, setAlerts] = useState([]);
@@ -802,9 +802,6 @@ function App() {
                   onChange={(e) => handleSettingChange('pickTime', parseInt(e.target.value))}
                   className="form-input"
                 >
-                  <option value="1">1 Second (Testing)</option>
-                  <option value="3">3 Seconds (Testing)</option>
-                  <option value="300">5 Minutes (Testing)</option>
                   <option value="30">30 Seconds</option>
                   <option value="60">60 Seconds</option>
                   <option value="90">90 Seconds</option>
@@ -820,7 +817,6 @@ function App() {
                   onChange={(e) => handleSettingChange('numTeams', parseInt(e.target.value))}
                   className="form-input"
                 >
-                  <option value="1">1 Team (Testing)</option>
                   <option value="8">8 Teams</option>
                   <option value="10">10 Teams</option>
                   <option value="12">12 Teams</option>

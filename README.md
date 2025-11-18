@@ -27,24 +27,37 @@ fantasy-football-draft-optimizer/
 
 ## Quick Start
 
+### Prerequisites
+
+- **Node.js** (v14 or higher) and **npm** installed on your machine
+- To check if you have them installed, run:
+  ```bash
+  node --version
+  npm --version
+  ```
+- If not installed, download from [nodejs.org](https://nodejs.org/)
+
 ### Frontend (Web Application)
 
 1. Navigate to the frontend directory:
 ```bash
-cd 'path to frontend folder'
+cd frontend
 ```
 
-2. Install dependencies:
+2. **IMPORTANT: Install dependencies first** (this step is required before running the app):
 ```bash
 npm install
 ```
+This will install all required packages including `react-scripts`, `react`, `react-dom`, and `recharts`. This may take a few minutes.
 
 3. Start the development server:
 ```bash
 npm start
 ```
 
-The app will open at [http://localhost:3000](http://localhost:3000)
+The app will open automatically at [http://localhost:3000](http://localhost:3000)
+
+**Note:** If you see an error like `react-scripts: command not found`, it means dependencies haven't been installed. Make sure you've run `npm install` in the `frontend` directory first.
 
 ### Modeling
 
@@ -93,6 +106,25 @@ npm run deploy
 - **Visualization**: Recharts
 - **Modeling**: Python, Pandas, nflreadpy
 - **Deployment**: GitHub Pages
+
+## Troubleshooting
+
+### Error: `react-scripts: command not found`
+**Solution:** Run `npm install` in the `frontend` directory. This installs all required dependencies.
+
+### Error: `Cannot find module 'react'` or similar
+**Solution:** Make sure you're in the `frontend` directory and run `npm install` again.
+
+### Port 3000 already in use
+**Solution:** Either stop the other process using port 3000, or set a different port:
+```bash
+PORT=3001 npm start
+```
+
+### CSV files not loading
+**Solution:** Make sure the CSV files are in the `frontend/public/` directory:
+- `player_adp_optimized_FINAL.csv`
+- `nfl_player_information.csv`
 
 ## License
 
