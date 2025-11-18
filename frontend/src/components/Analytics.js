@@ -12,7 +12,7 @@ const Analytics = ({ allPlayers = [], draftedPlayerNames = [], draftSettings = n
 
   const positionData = useMemo(() => {
     const positions = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
-    const data = ;
+    const data = {};
 
     positions.forEach(pos => {
       const playersInPosition = availablePlayers.filter(p => p.position === pos);
@@ -65,7 +65,7 @@ const Analytics = ({ allPlayers = [], draftedPlayerNames = [], draftSettings = n
 
   const histogramData = useMemo(() => {
     const positions = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
-    const histograms = ;
+    const histograms = {};
     const bins = 10;
     const binWidth = (globalRange.max - globalRange.min) / bins;
 
@@ -121,7 +121,7 @@ const Analytics = ({ allPlayers = [], draftedPlayerNames = [], draftSettings = n
   const rankingBucketData = useMemo(() => {
     const positions = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
     const bucketSize = 10;
-    const rankingData = ;
+    const rankingData = {};
 
     positions.forEach(pos => {
 
