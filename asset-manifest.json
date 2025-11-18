@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/fantasy-football-draft-optimizer/static/css/main.05344d4f.css",
-    "main.js": "/fantasy-football-draft-optimizer/static/js/main.6f6590f5.js",
+    "main.js": "/fantasy-football-draft-optimizer/static/js/main.5c08e797.js",
     "index.html": "/fantasy-football-draft-optimizer/index.html",
     "main.05344d4f.css.map": "/fantasy-football-draft-optimizer/static/css/main.05344d4f.css.map",
-    "main.6f6590f5.js.map": "/fantasy-football-draft-optimizer/static/js/main.6f6590f5.js.map"
+    "main.5c08e797.js.map": "/fantasy-football-draft-optimizer/static/js/main.5c08e797.js.map"
   },
   "entrypoints": [
     "static/css/main.05344d4f.css",
-    "static/js/main.6f6590f5.js"
+    "static/js/main.5c08e797.js"
   ]
 }
